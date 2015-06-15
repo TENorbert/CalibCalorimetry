@@ -96,7 +96,7 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     return;
   }
 
-  cout << "Run number: " << runNum << endl;
+  cout << "Run number: " << runNum << "\n" <<endl;
 
   TFile* fileEB = TFile::Open(ebDQMFileName_.c_str());
   TFile* fileEE = TFile::Open(eeDQMFileName_.c_str());
@@ -106,7 +106,7 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   string pathEB=path;
   string pathEE=path;
   pathEB+="/EcalBarrel/Run summary/EBTimingTask/";
-  pathEE+="/EcalEndcap/Run summary/EETimingTask/";;
+  pathEE+="/EcalEndcap/Run summary/EETimingTask/";
   TProfile2D* ttMapEBorig = (TProfile2D*) fileEB->Get((pathEB+"EBTMT timing map").c_str());
   TProfile2D* ttMapEEPorig = (TProfile2D*) fileEE->Get((pathEE+"EETMT timing map EE +").c_str());
   TProfile2D* ttMapEEMorig = (TProfile2D*) fileEE->Get((pathEE+"EETMT timing map EE -").c_str());
@@ -174,6 +174,7 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
   }
 
+
   // loop over TT map, fill array and 1-D hist -- EB
   for(int xphi=1; xphi < 73; ++xphi)
   {
@@ -207,7 +208,6 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       //}
     }
   }
-  // create avg tower times
   for(int i=0; i<EBDetId::MAX_SM; ++i)
   {
     for(int j=0; j<maxNumCCUinFed; ++j) // add two to account for mem boxes
@@ -241,6 +241,8 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   {
     for(int y=1; y < 20; ++y)
     {
+      cout <<"Looping Over EE- Histograms!!\tt" << "(ix, iy)"<< "= (" << x << " , " << y << ")\n"  <<endl;
+      cout << "Bin Entries for (" << x << " , " << y << ") =" << ttMapEEM->GetBinEntries(ttMapEEM->GetBin(x,y)) << endl;
       if(ttMapEEM->GetBinEntries(ttMapEEM->GetBin(x,y)) > 0)
       {
         int centerCryIx = x*5 - 1;
@@ -262,6 +264,9 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
             centerCryIx--;
           }
         }
+       cout << "DetMinus! = " << detMinus <<endl;
+        //skip Non-Existing detIds
+        if(detMinus!=EEDetId()) continue;
         if(detMinus==EEDetId())
         {
           cout << "Considering x=" << x << " y=" << y << endl;
@@ -288,7 +293,9 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       }
 
 
-      if(ttMapEEP->GetBinEntries(ttMapEEP->GetBin(x,y)) > 0)
+      
+      cout <<"Looping Over EE+ Histograms!!\tt" << "(ix, iy)"<< "= (" << x << " , " << y << ")\n"  <<endl;
+     if(ttMapEEP->GetBinEntries(ttMapEEP->GetBin(x,y)) > 0)
       {
         int centerCryIx = x*5 - 1;
         int centerCryIy = y*5 - 1;
@@ -336,6 +343,7 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
   }
 
+cout <<"Creating EE TT Average Time!!\n" <<endl;
   // create avg tower times -- EE
   for(int i=0; i<numEEsm; ++i)
   {
@@ -373,6 +381,7 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     }
   }
 
+ cout <<"Reading Delays From the DB!!\n" <<endl;
   // now read the DB and get the absolute delays
   int feDelaysFromDBEB[EBDetId::MAX_SM][maxNumCCUinFed];
   int feDelaysFromDBEE[numEEsm][maxNumCCUinFed];
@@ -461,7 +470,9 @@ EcalAdjustFETimingDQM::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   // so here just add that to the DB delays
   // make new arrays for absolute time
   // one 24 hardware counts correspond to 25 ns => rescale averages by 24./25.
-  int newFEDelaysEB[EBDetId::MAX_SM][maxNumCCUinFed];
+  cout <<"Now Creating New HD Delays!!\n" <<endl;
+ 
+ int newFEDelaysEB[EBDetId::MAX_SM][maxNumCCUinFed];
   int newFEDelaysEE[numEEsm][maxNumCCUinFed];
   for(int i=0; i<EBDetId::MAX_SM; ++i)
   {
